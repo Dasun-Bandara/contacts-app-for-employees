@@ -39,12 +39,20 @@ public class MainFormController {
     }
 
     public void btnSaveOnAction(ActionEvent event) {
-        if(!isValid()){
-            return;
+        if(!isValid()) return;
+        if(!tblEmployee.isDisable()){
+            for (Employee employee: getTableList()) {
+                if(employee.getContact().equals(txtContact.getText())){
+                    new Alert(Alert.AlertType.ERROR,"Contact number is already exist").show();
+                    return;
+                }
+            }
+        }else {
+            tblEmployee.setDisable(false);
+            txtSearch.setDisable(false);
         }
-        tblEmployee.setDisable(false);
         getTableList().add(new Employee(txtId.getText(),txtName.getText(),txtContact.getText()));
-        txtSearch.setDisable(false);
+        btnNew.fire();
     }
 
     public void btnDeleteOnAction(ActionEvent event) {
