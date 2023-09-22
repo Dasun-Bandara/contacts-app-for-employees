@@ -38,6 +38,9 @@ public class MainFormController {
 
         tblEmployee.getSelectionModel().selectedItemProperty().addListener((value,previous,current)->{
             if(current == null) return;
+            txtId.setText(current.getId());
+            txtName.setText(current.getName());
+            txtContact.setText(current.getContact());
             btnDelete.setDisable(false);
         });
 
@@ -47,8 +50,15 @@ public class MainFormController {
         if(!isValid()) return;
         if(!tblEmployee.isDisable()){
             for (Employee employee: getTableList()) {
-                if (employee.getId().equals(txtId.getText())) continue;
+                if (employee.getId().equals(txtId.getText())){
+                    tblEmployee.getSelectionModel().getSelectedItem().setName(txtName.getText());
+                    tblEmployee.getSelectionModel().getSelectedItem().setContact(txtContact.getText());
+                    tblEmployee.refresh();
+                    return;
+                }
                 if(employee.getContact().equals(txtContact.getText())){
+                    txtContact.selectAll();
+                    txtContact.requestFocus();
                     new Alert(Alert.AlertType.ERROR,"Contact number is already exist").show();
                     return;
                 }
@@ -57,6 +67,7 @@ public class MainFormController {
             tblEmployee.setDisable(false);
             txtSearch.setDisable(false);
         }
+
         getTableList().add(new Employee(txtId.getText(),txtName.getText(),txtContact.getText()));
         btnNew.fire();
     }
