@@ -36,12 +36,18 @@ public class MainFormController {
             txtName.requestFocus();
         });
 
+        tblEmployee.getSelectionModel().selectedItemProperty().addListener((value,previous,current)->{
+            if(current == null) return;
+            btnDelete.setDisable(false);
+        });
+
     }
 
     public void btnSaveOnAction(ActionEvent event) {
         if(!isValid()) return;
         if(!tblEmployee.isDisable()){
             for (Employee employee: getTableList()) {
+                if (employee.getId().equals(txtId.getText())) continue;
                 if(employee.getContact().equals(txtContact.getText())){
                     new Alert(Alert.AlertType.ERROR,"Contact number is already exist").show();
                     return;
@@ -56,6 +62,10 @@ public class MainFormController {
     }
 
     public void btnDeleteOnAction(ActionEvent event) {
+        getTableList().remove(tblEmployee.getSelectionModel().getSelectedItem());
+        tblEmployee.refresh();
+        tblEmployee.getSelectionModel().clearSelection();
+        btnDelete.setDisable(true);
     }
 
     public void btnNewOnAction(ActionEvent event) {
