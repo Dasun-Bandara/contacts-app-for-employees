@@ -37,11 +37,11 @@
       </VBox>
       <Button fx:id="btnSave" defaultButton="true" layoutX="147.0" layoutY="218.0" mnemonicParsing="false" onAction="#btnSaveOnAction" prefHeight="24.0" prefWidth="76.0" text="SAVE" />
       <Button fx:id="btnDelete" layoutX="244.0" layoutY="218.0" mnemonicParsing="false" onAction="#btnDeleteOnAction" prefHeight="24.0" prefWidth="76.0" style="-fx-background-color: orange;" text="DELETE" />
-      <TableView fx:id="tblEmployee" layoutX="12.0" layoutY="254.0" prefHeight="228.0" prefWidth="447.0">
+      <TableView fx:id="tblEmployee" layoutX="12.0" layoutY="254.0" onDragDropped="#tblEmployeeOnDragDropped" onDragOver="#tblEmployeeOnDragOver" prefHeight="228.0" prefWidth="447.0">
          <columns>
             <TableColumn prefWidth="117.0" text="ID" />
-            <TableColumn prefWidth="143.0" text="NAME" />
-            <TableColumn prefWidth="161.0" text="CONTACT" />
+            <TableColumn prefWidth="160.0" text="NAME" />
+            <TableColumn prefWidth="160.0" text="CONTACT" />
          </columns>
       </TableView>
       <TextField fx:id="txtSearch" alignment="CENTER" layoutX="12.0" layoutY="493.0" prefHeight="24.0" prefWidth="447.0" promptText="Enter something to search">
