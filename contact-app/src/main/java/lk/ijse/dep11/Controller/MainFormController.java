@@ -1,19 +1,22 @@
 package lk.ijse.dep11.Controller;
 
+import com.opencsv.CSVReader;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import lk.ijse.dep11.td.Employee;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
 
 public class MainFormController {
     public AnchorPane root;
@@ -52,6 +55,7 @@ public class MainFormController {
             ObservableList<Employee> employeeObservableList = FXCollections.observableList(employeeArrayList);
             tblEmployee.setItems(employeeObservableList);
             tblEmployee.setDisable(employeeArrayList.size() == 0);
+            txtSearch.setDisable(tblEmployee.isDisable());
             btnNew.fire();
             txtName.requestFocus();
         });
@@ -68,6 +72,10 @@ public class MainFormController {
             }
         });
 
+//        Platform.runLater(()->{
+//            File csvFile = new File("target/Data.csv");
+//            updateCsvFile(csvFile);
+//        });
 
     }
 
@@ -177,6 +185,59 @@ public class MainFormController {
 
 
     }
+
+    private ArrayList<String[]> readCsvFile(File csvFile){
+        ArrayList<String[]> temp = new ArrayList<>();
+        try {
+            FileReader fr = new FileReader(csvFile);
+            CSVReader reader = new CSVReader(fr);
+            String[] line;
+            while ((line = reader.readNext()) != null){
+                temp.add(line);
+            }
+            return temp;
+
+        }catch (Exception e){
+            e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR,"CSV file reading process is failed").show();
+            return temp;
+        }
+    }
+    private void updateCsvFile(File csvFile){
+        ArrayList<String[]> csvList = readCsvFile(csvFile);
+        String[] patterns = {"E-\\d{3}","[A-Za-z ]+","[0][1-9]{2}-\\d{7}"};
+        loop:
+        for (String[] line: csvList) {
+            for (int i = 0; i < 3; i++) {
+                if (!line[i].matches(patterns[i])){
+                    continue loop;
+                }
+            }
+            for (int i = 0; i < employeeArrayList.size(); i++) {
+                if(!(employeeArrayList.get(i).getId().equals(line[0])) && (employeeArrayList.get(i).getContact().equals(line[2]))) continue loop;
+                if (employeeArrayList.get(i).getId().equals(line[0])){
+                    employeeArrayList.remove(i);
+                    employeeArrayList.add(i,new Employee(line[0],line[1],line[2]));
+                    tblEmployee.refresh();
+                    continue loop;
+                }
+            }
+            employeeArrayList.add(new Employee(line[0],line[1],line[2]));
+            tblEmployee.refresh();
+        }
+    }
+
+    public void tblEmployeeOnDragOver(DragEvent dragEvent) {
+        dragEvent.acceptTransferModes(TransferMode.ANY);
+
+    }
+    public void tblEmployeeOnDragDropped(DragEvent dragEvent) {
+        String path = dragEvent.getDragboard().getFiles().get(0).getAbsolutePath();
+        File file = new File(path);
+        updateCsvFile(file);
+    }
+
+
 }
 
 
