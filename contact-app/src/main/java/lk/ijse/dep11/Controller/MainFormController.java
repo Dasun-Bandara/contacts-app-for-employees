@@ -1,13 +1,18 @@
 package lk.ijse.dep11.Controller;
 
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import lk.ijse.dep11.td.Employee;
 
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainFormController {
@@ -21,8 +26,10 @@ public class MainFormController {
     public TextField txtSearch;
     public Button btnNew;
 
-    public void initialize(){
-        Control[] controls = {btnDelete,tblEmployee,txtSearch};
+    private List<Employee> employeeArrayList = new ArrayList<>();
+
+    public void initialize() throws IOException {
+        Control[] controls = {btnDelete,txtSearch};
         for (Control c : controls) {
             c.setDisable(true);
         }
@@ -31,10 +38,6 @@ public class MainFormController {
         tblEmployee.getColumns().get(1).setCellValueFactory(new PropertyValueFactory<>("name"));
         tblEmployee.getColumns().get(2).setCellValueFactory(new PropertyValueFactory<>("contact"));
 
-        Platform.runLater(()->{
-            btnNew.fire();
-            txtName.requestFocus();
-        });
 
         tblEmployee.getSelectionModel().selectedItemProperty().addListener((value,previous,current)->{
             if(current == null) return;
@@ -43,6 +46,28 @@ public class MainFormController {
             txtContact.setText(current.getContact());
             btnDelete.setDisable(false);
         });
+
+        Platform.runLater(()->{
+            employeeArrayList = readEmployeeDetails();
+            ObservableList<Employee> employeeObservableList = FXCollections.observableList(employeeArrayList);
+            tblEmployee.setItems(employeeObservableList);
+            tblEmployee.setDisable(employeeArrayList.size() == 0);
+            btnNew.fire();
+            txtName.requestFocus();
+        });
+
+        Platform.runLater(()->{
+            root.getScene().getWindow().setOnCloseRequest(event ->{
+                saveEmployeeDetails();
+            });
+        });
+
+        tblEmployee.setOnKeyPressed(event ->{
+            if(event.getCode() == KeyCode.DELETE){
+                btnDelete.fire();
+            }
+        });
+
 
     }
 
@@ -70,6 +95,7 @@ public class MainFormController {
 
         getTableList().add(new Employee(txtId.getText(),txtName.getText(),txtContact.getText()));
         btnNew.fire();
+
     }
 
     public void btnDeleteOnAction(ActionEvent event) {
@@ -103,11 +129,53 @@ public class MainFormController {
     }
 
     private String generateId(){
-        if(getTableList().size() == 0) return "C-001";
-        return String.format("C-%03d",Integer.parseInt(getTableList().get(getTableList().size()-1).getId().substring(2))+1);
+        if(getTableList().size() == 0) return "E-001";
+        return String.format("E-%03d",Integer.parseInt(getTableList().get(getTableList().size()-1).getId().substring(2))+1);
     }
-    private List<Employee> getTableList(){
+    private ObservableList<Employee> getTableList(){
         return tblEmployee.getItems();
+    }
+
+    private ArrayList<Employee> readEmployeeDetails(){
+        try {
+            File file = new File("target/employee.db");
+            if(!file.exists()) return new ArrayList<>();
+            FileInputStream fis = new FileInputStream(file);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            try {
+                return  (ArrayList<Employee>) ois.readObject();
+            }finally {
+                ois.close();
+            }
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+            new Alert(Alert.AlertType.ERROR,"Updating process failed").show();
+            return new ArrayList<>();
+        }
+
+    }
+
+    private void saveEmployeeDetails() {
+        try {
+            File file = new File("target/employee.db");
+            if(!file.exists()) file.createNewFile();
+            FileOutputStream fos = new FileOutputStream(file);
+            BufferedOutputStream bos = new BufferedOutputStream(fos);
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            try {
+                oos.writeObject(employeeArrayList);
+            }finally {
+                oos.close();
+            }
+
+        }catch (Exception ex){
+            ex.printStackTrace();
+            new Alert(Alert.AlertType.ERROR,"Employees details weren't saved").show();
+        }
+
+
     }
 }
 
