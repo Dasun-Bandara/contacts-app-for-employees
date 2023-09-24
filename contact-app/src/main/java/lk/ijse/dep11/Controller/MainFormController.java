@@ -15,7 +15,10 @@ import lk.ijse.dep11.td.Employee;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MainFormController {
@@ -30,6 +33,8 @@ public class MainFormController {
     public Button btnNew;
 
     private List<Employee> employeeArrayList = new ArrayList<>();
+
+    private ObservableList<Employee> employeeObservableList;
 
     public void initialize() throws IOException {
         Control[] controls = {btnDelete,txtSearch};
@@ -52,7 +57,7 @@ public class MainFormController {
 
         Platform.runLater(()->{
             employeeArrayList = readEmployeeDetails();
-            ObservableList<Employee> employeeObservableList = FXCollections.observableList(employeeArrayList);
+            employeeObservableList = FXCollections.observableList(employeeArrayList);
             tblEmployee.setItems(employeeObservableList);
             tblEmployee.setDisable(employeeArrayList.size() == 0);
             txtSearch.setDisable(tblEmployee.isDisable());
@@ -72,10 +77,25 @@ public class MainFormController {
             }
         });
 
-//        Platform.runLater(()->{
-//            File csvFile = new File("target/Data.csv");
-//            updateCsvFile(csvFile);
-//        });
+        txtSearch.textProperty().addListener(event ->{
+            String regex = "";
+            char[] charArray = txtSearch.getText().toCharArray();
+            for (char element: charArray) {
+                if(element == '+' | element == '*' | element == '.' | element == '?'){
+                    regex += "["+element+"]";
+                    continue;
+                }
+                if(!Character.isLetter(element)){
+                    regex += element;
+                }else {
+                    regex += "["+element+""+(Character.isLowerCase(element) ? Character.toUpperCase(element) : Character.toLowerCase(element))+"]";
+                }
+            }
+            search(regex);
+            if(txtSearch.getText().isBlank()){
+                tblEmployee.setItems(employeeObservableList);
+            }
+        });
 
     }
 
@@ -127,7 +147,7 @@ public class MainFormController {
             new Alert(Alert.AlertType.ERROR,"Invalid Name").show();
             return false;
         }
-        if(!txtContact.getText().matches("[0][1-9]{2}-\\d{7}")){
+        if(!txtContact.getText().matches("0[1-9][0-9]-\\d{7}")){
             txtContact.selectAll();
             txtContact.requestFocus();
             new Alert(Alert.AlertType.ERROR,"Invalid Contact").show();
@@ -137,11 +157,15 @@ public class MainFormController {
     }
 
     private String generateId(){
+        ArrayList<Integer> idList = new ArrayList<>();
         if(getTableList().size() == 0) return "E-001";
-        return String.format("E-%03d",Integer.parseInt(getTableList().get(getTableList().size()-1).getId().substring(2))+1);
+        for (Employee employee: getTableList()) {
+            idList.add(Integer.parseInt(employee.getId().substring(2)));
+        }
+        return String.format("E-%03d",Collections.max(idList)+1);
     }
     private ObservableList<Employee> getTableList(){
-        return tblEmployee.getItems();
+        return employeeObservableList;
     }
 
     private ArrayList<Employee> readEmployeeDetails(){
@@ -205,7 +229,7 @@ public class MainFormController {
     }
     private void updateCsvFile(File csvFile){
         ArrayList<String[]> csvList = readCsvFile(csvFile);
-        String[] patterns = {"E-\\d{3}","[A-Za-z ]+","[0][1-9]{2}-\\d{7}"};
+        String[] patterns = {"E-\\d{3}","[A-Za-z ]+","0[1-9]{2}-\\d{7}"};
         loop:
         for (String[] line: csvList) {
             for (int i = 0; i < 3; i++) {
@@ -237,6 +261,21 @@ public class MainFormController {
         updateCsvFile(file);
     }
 
+    public void search(String regex){
+        Pattern pattern = Pattern.compile(regex);
+        ArrayList<Employee> temp = new ArrayList<>();
+        for (Employee employee: employeeArrayList) {
+            Matcher matcherId = pattern.matcher(employee.getId());
+            Matcher matcherName = pattern.matcher(employee.getName());
+            Matcher matcherContact = pattern.matcher(employee.getContact());
+            if (matcherId.find() | matcherName.find() | matcherContact.find()){
+                temp.add(employee);
+            }
+        }
+        ObservableList<Employee> obTemp = FXCollections.observableList(temp);
+        tblEmployee.setItems(obTemp);
+        tblEmployee.refresh();
+    }
 
 }
 
