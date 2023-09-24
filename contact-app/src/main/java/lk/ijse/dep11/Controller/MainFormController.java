@@ -252,6 +252,11 @@ public class MainFormController {
     }
 
     public void tblEmployeeOnDragOver(DragEvent dragEvent) {
+        if(!dragEvent.getDragboard().getFiles().get(0).getName().endsWith(".csv")){
+            dragEvent.consume();
+            new Alert(Alert.AlertType.INFORMATION,"Drop only csv files here").show();
+            return;
+        }
         dragEvent.acceptTransferModes(TransferMode.ANY);
 
     }
